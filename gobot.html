@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gobot-1.0 Sentinel Dashboard</title>
+  <style>
+    body {
+      background-color: #121212;
+      color: #00ffcc;
+      font-family: monospace;
+      margin: 0;
+      padding: 20px;
+    }
+    h1 {
+      border-bottom: 1px solid #00ffcc;
+      padding-bottom: 10px;
+    }
+    .panel {
+      background: #1e1e1e;
+      border: 1px solid #333;
+      padding: 15px;
+      margin-top: 15px;
+      border-radius: 4px;
+    }
+    input, button {
+      background: #222;
+      color: #00ffcc;
+      border: 1px solid #00ffcc;
+      padding: 8px 12px;
+      font-family: monospace;
+      margin-right: 5px;
+    }
+    button:hover {
+      background: #00ffcc;
+      color: #121212;
+      cursor: pointer;
+    }
+    #log {
+      background: #000;
+      border: 1px solid #444;
+      height: 200px;
+      overflow-y: auto;
+      padding: 10px;
+      margin-top: 10px;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Gobot-1.0 Sentinel Interface</h1>
+  
+  <div class="panel">
+    <h3>Connection Status: <span id="status" style="color: yellow;">Disconnected</span></h3>
+    <input type="text" id="wsUrl" value="ws://localhost:8084" style="width: 250px;">
+    <button onclick="connectWS()">Connect</button>
+    <button onclick="disconnectWS()">Disconnect</button>
+  </div>
+
+  <div class="panel">
+    <h3>Command Dispatch</h3>
+    <input type="text" id="commandInput" placeholder="Enter sentinel command..." style="width: 300px;">
+    <button onclick="sendCommand()">Send Telemetry</button>
+  </div>
+
+  <div class="panel">
+    <h3>Telemetry Stream Log</h3>
+    <div id="log"></div>
+  </div>
+
+  <script>
+    let ws = null;
+    const logDiv = document.getElementById('log');
+    const statusSpan = document.getElementById('status');
+
+    function logMessage(msg) {
+      logDiv.innerHTML += `<div>[${new Date().toLocaleTimeString()}] ${msg}</div>`;
+      logDiv.scrollTop = logDiv.scrollHeight;
+    }
+
+    function connectWS() {
+      const url = document.getElementById('wsUrl').value;
+      ws = new WebSocket(url);
+
+      ws.onopen = () => {
+        statusSpan.innerText = 'Connected';
+        statusSpan.style.color = '#00ffcc';
+        logMessage('Connected to Gobot-1.0 backend.');
+      };
+
+      ws.onmessage = (event) => {
+        logMessage(`RX: ${event.data}`);
+      };
+
+      ws.onclose = () => {
+        statusSpan.innerText = 'Disconnected';
+        statusSpan.style.color = 'red';
+        logMessage('Connection closed.');
+      };
+
+      ws.onerror = (err) => {
+        logMessage(`Error: ${err.message || 'WebSocket error'}`);
+      };
+    }
+
+    function disconnectWS() {
+      if (ws) ws.close();
+    }
+
+    function sendCommand() {
+      if (!ws || ws.readyState !== WebSocket.OPEN) {
+        alert('WebSocket is not connected.');
+        return;
+      }
+      const val = document.getElementById('commandInput').value;
+      const payload = JSON.stringify({ action: val, source: 'Gobot-1.0-UI' });
+      ws.send(payload);
+      logMessage(`TX: ${payload}`);
+      document.getElementById('commandInput').value = '';
+    }
+  </script>
+
+</body>
+</html>
