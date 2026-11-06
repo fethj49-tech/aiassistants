@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexus-Prime Outpost Workstation</title>
+    <style>
+        body { background: #0b0f19; color: #00ffcc; font-family: monospace; padding: 20px; margin: 0; }
+        h2 { border-bottom: 1px solid #00ffcc; padding-bottom: 10px; }
+        .panel { background: #131c2e; border: 1px solid #1e293b; padding: 15px; margin-top: 15px; border-radius: 6px; }
+        input, button { background: #1a233a; color: #fff; border: 1px solid #00ffcc; padding: 10px; margin-top: 10px; width: 100%; font-family: monospace; }
+        button { background: #00ffcc; color: #0b0f19; font-weight: bold; cursor: pointer; }
+        button:hover { background: #00cca3; }
+        pre { background: #05070a; padding: 10px; border: 1px solid #1e293b; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h2>Nexus-Prime Outpost Workstation</h2>
+    <div class="panel">
+        <h3>Background Task Dispatcher ("The Dirty Work")</h3>
+        <p>Send background compilation, telemetry checks, or asset syncing tasks to Nexus-Prime while keeping your main terminal free.</p>
+        <input type="text" id="taskInput" placeholder="Enter background task description...">
+        <button onclick="dispatchTask()">Dispatch to Nexus-Prime</button>
+    </div>
+    <div class="panel">
+        <h3>Live Synapse Feed</h3>
+        <pre id="logOutput">Connecting to Nexus-Prime outpost on port 9002...</pre>
+    </div>
+
+    <script>
+        const ws = new WebSocket('ws://localhost:9002');
+        const logOutput = document.getElementById('logOutput');
+
+        ws.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            logOutput.innerText += '\n' + JSON.stringify(data, null, 2);
+            logOutput.scrollTop = logOutput.scrollHeight;
+        };
+
+        function dispatchTask() {
+            const task = document.getElementById('taskInput').value;
+            if (!task) return;
+            ws.send(JSON.stringify({ action: 'DISPATCH_DIRTY_WORK', task: task }));
+            document.getElementById('taskInput').value = '';
+        }
+    </script>
+</body>
+</html>
